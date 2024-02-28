@@ -1,0 +1,7 @@
+/.pytest_cache/
+/DOCKER.md
+/Dockerfile
+/PYTHON.md
+/README.md
+/unittests.py
+/terraform
