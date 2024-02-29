@@ -1,0 +1,14 @@
+env
+__pycache__
+*.pyc
+
+.DS_Store
+
+.idea
+
+node_modules
+
+.terraform
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
