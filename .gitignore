@@ -1,0 +1,24 @@
+# Python-specific ignores
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE-specific ignores
+.vscode/
+.idea/
+*.sublime-*
+
+secrets
+
+# Ignore Terraform state files
+*.tfstate
+*.tfstate.*.backup
+*.tfstate.backup
+*.tfvars
+
+# Ignore local development files
+.terraform/
+terraform.tfstate.d/
+.tfenv/
+.terraform.lock.hcl
