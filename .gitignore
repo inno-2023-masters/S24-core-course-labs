@@ -1,0 +1,4 @@
+app.log
+__pycache__
+.terraform
+
