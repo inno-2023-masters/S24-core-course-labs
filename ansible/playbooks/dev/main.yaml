@@ -1,0 +1,14 @@
+- hosts: all
+  roles:
+
+    - role: geerlingguy.docker
+      become: yes
+      vars:
+        - docker_install_compose_plugin: true
+
+    - role: ../../../roles/web_app
+      become: yes
+      vars:
+        app_dir: app_python
+        web_image: bavpnet/app_python
+        web_port: 8080
