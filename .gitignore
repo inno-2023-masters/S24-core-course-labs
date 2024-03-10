@@ -1,0 +1,15 @@
+# JetBrains IDEs' specific files
+.idea
+
+# Virtualenv
+venv
+
+# Cache
+app_python/__pycache__
+app_python/.pytest_cache
+
+# Terraform cache
+terraform/*/.terraform
+
+# Password for ssh connection in Ansible folder
+ansible/vault_pass.txt
