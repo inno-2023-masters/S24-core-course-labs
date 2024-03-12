@@ -1,0 +1,13 @@
+- name: Install Docker
+  hosts: all
+  become: true
+
+  roles:
+#    - geerlingguy.docker
+    - docker
+
+- name: Deploy Web Application
+  hosts: all
+  become: true
+  roles:
+    - web_app
