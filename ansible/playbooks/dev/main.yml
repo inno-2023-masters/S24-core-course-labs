@@ -1,0 +1,4 @@
+- name: Install web_app
+  hosts: all
+  roles:
+    - role: roles/web_app
