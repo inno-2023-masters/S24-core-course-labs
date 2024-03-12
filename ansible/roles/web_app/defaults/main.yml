@@ -1,0 +1,7 @@
+---
+docker_image: "y4cerr/app_python"
+tag: "latest"
+container_name: "app_python"
+app_directory: "app_python"
+exposed_ports: ["8080:8080"]
+wipe: false
