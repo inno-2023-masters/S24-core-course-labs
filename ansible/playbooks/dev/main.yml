@@ -1,0 +1,11 @@
+- name: Install docker & deploy python app
+  hosts: all
+  become: true
+  vars:
+    folder: "/app_python"
+    image: "vectorsmaster/flask-app"
+    ex_port: "5000"
+    in_port: "5000"
+  roles:
+    - docker
+    - web_app
