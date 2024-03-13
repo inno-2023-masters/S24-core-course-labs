@@ -1,0 +1,6 @@
+- name: lab-06
+  hosts: all
+  become: true
+  roles:
+    - docker
+    - web_app
