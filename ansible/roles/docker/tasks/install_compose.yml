@@ -1,0 +1,6 @@
+- import_tasks: install_docker.yml
+- ansible.builtin.apt:
+    name: docker-compose-plugin
+    state: present
+  tags:
+    docker-compose
