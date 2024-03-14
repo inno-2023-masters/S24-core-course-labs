@@ -1,0 +1,56 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - app_flutter/**
+
+defaults:
+  run:
+    working-directory: app_flutter
+
+jobs:
+  install_clear_test_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v4
+
+      - name: setup flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+        
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run tests
+        run: flutter test
+      
+      - name: Lint
+        run: dart format --set-exit-if-changed .
+
+      - name: Clear
+        run: flutter clean
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+
+      - name: Login
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          context: ./app_flutter
+          file: ./app_flutter/Dockerfile
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/flutter_web:latest
