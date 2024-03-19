@@ -1,0 +1,6 @@
+virtual_machines:
+  hosts:
+    web_server:
+      ansible_host: 16.171.135.107
+  vars:
+    ansible_user: ubuntu
