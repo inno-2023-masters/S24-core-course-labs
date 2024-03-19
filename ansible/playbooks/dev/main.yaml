@@ -1,0 +1,7 @@
+- name: Docker roles
+  hosts: all
+  become: true
+
+  roles:
+    - docker
+    - web_app
