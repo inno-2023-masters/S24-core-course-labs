@@ -1,0 +1,6 @@
+- hosts: cloudvms
+  remote_user: devops_user
+  become: yes
+  roles:
+    - roles/docker
+    - roles/web_app
