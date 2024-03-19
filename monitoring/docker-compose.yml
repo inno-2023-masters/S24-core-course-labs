@@ -1,0 +1,68 @@
+version: "3"
+
+networks:
+  loki:
+
+services:
+  app_python:
+    image: ramprin/devops_py:latest
+    ports:
+      - "8082:8080"
+    logging: &logging
+      driver: "json-file"
+      options:
+        tag: "{{.ImageName}}|{{.Name}}"
+    networks:
+      - loki
+
+  app_go:
+    image: ramprin/devops_go:latest
+    ports:
+      - "8080:8080"
+    logging: *logging
+    networks:
+      - loki
+
+
+  loki:
+    container_name: loki
+    image: grafana/loki:2.9.1
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    logging: *logging
+    networks:
+      - loki
+
+  promtail:
+    container_name: promtail
+    image: grafana/promtail:2.9.1
+    volumes:
+      - /var/log:/var/log
+      - /var/lib:/var/lib
+      - ./config/promtail.yaml:/etc/promtail/promtail.yml
+
+    command: -config.file=/etc/promtail/promtail.yml
+    logging: *logging
+    depends_on:
+      - loki
+    networks:
+      - loki
+
+  grafana:
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - ./config/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yml
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    logging: *logging
+    networks:
+      - loki
+    depends_on:
+      - loki
+      - promtail
