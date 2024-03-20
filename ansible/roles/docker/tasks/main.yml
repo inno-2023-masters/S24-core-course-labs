@@ -1,0 +1,10 @@
+- name: Ensure pip is installed
+  ansible.builtin.package:
+    name: "{{ pip_package }}"
+    state: present
+  tags:
+    - packages
+
+- include_tasks: install_docker.yml
+
+- include_tasks: install_compose.yml
