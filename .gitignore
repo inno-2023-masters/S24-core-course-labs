@@ -1,0 +1,9 @@
+**/.DS_Store
+**/.terraform
+**/key
+**/.idea
+**/venv
+**/.pytest_cache
+**/__pycache__
+**/logs/*
+**/*.pyc

@@ -1,0 +1,235 @@
+version: "3"
+
+networks:
+  loki:
+
+services:
+  python-app: 
+    build: ../app_python
+    volumes: 
+      - python-logs:/logs
+    ports:
+      - "5000:5000"
+    environment:
+      - LOGS_FILE_PATH=/logs/moscow-time.log
+    logging:
+      driver: "json-file"
+      options: 
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+        max-size: "200k"
+    networks: 
+      - loki
+    deploy:
+      resources:
+        limits:
+          memory: 50M
+        reservations:
+          memory: 20M
+    healthcheck:
+      test: curl --fail http://localhost:5000/health || exit 1 
+      interval: 10s
+      retries: 1
+      start_period: 20s
+      timeout: 10s
+  
+  java-app: 
+    build: ../app_java
+    volumes: 
+      - java-logs:/app/logs
+    ports:
+      - "8081:8081"
+    logging:
+      driver: "json-file"
+      options: 
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+        max-size: "200k"
+    networks: 
+      - loki 
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+        reservations:
+          memory: 20M
+    healthcheck:
+      test: curl --fail http://127.0.0.1:8081/actuator/health || exit 1 
+      interval: 10s
+      retries: 1
+      start_period: 30s
+      timeout: 10s
+
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki
+    logging:
+      driver: "json-file"
+      options: 
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+        max-size: "200k"
+    deploy:
+      resources:
+        limits:
+          memory: 50M
+        reservations:
+          memory: 20M
+    healthcheck:
+      test: wget --spider http://127.0.0.1:3100/ready
+      interval: 10s
+      retries: 1
+      start_period: 50s
+      timeout: 10s
+
+  prometheus:
+    image: prom/prometheus:v2.36.2
+    volumes:
+      - prometheus-conf:/etc/prometheus
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml' 
+    ports:
+      - 9090:9090
+    networks:
+      - loki
+    logging:
+      driver: "json-file"
+      options: 
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+        max-size: "200k"
+    deploy:
+      resources:
+        limits:
+          memory: 50M
+        reservations:
+          memory: 20M
+    healthcheck:
+      test: wget --spider http://localhost:9090
+      interval: 10s
+      retries: 1
+      start_period: 50s
+      timeout: 10s
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    volumes:
+      - promtail-conf:/etc/promtail
+      - java-logs:/var/log/app_java
+      - python-logs:/var/log/app_python
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    # command: -config.file=/etc/promtail/config.yml && apt update -y && apt install -y curl
+    entrypoint: bash -c "apt update && apt install -y curl && /usr/bin/promtail -config.file=/etc/promtail/config.yml" 
+    networks:
+      - loki
+    logging:
+      driver: "json-file"
+      options: 
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+        max-size: "200k"
+    deploy:
+      resources:
+        limits:
+          memory: 50M
+        reservations:
+          memory: 20M
+    healthcheck:
+      test: curl --fail http://127.0.0.1:9080/ready || exit 1 
+      interval: 10s
+      retries: 1
+      start_period: 120s
+      timeout: 10s
+
+  grafana:
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy 
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: false
+          version: 1
+          editable: false
+        - name: Prometheus
+          type: prometheus
+          access: proxy 
+          orgId: 1
+          url: http://prometheus:9090
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - loki
+    logging:
+      driver: "json-file"
+      options: 
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+        max-size: "200k"
+    deploy:
+      resources:
+        limits:
+          memory: 50M
+        reservations:
+          memory: 20M
+    healthcheck:
+      test: curl --fail http://127.0.0.1:3000/api/health || exit 1
+      interval: 10s
+      retries: 1
+      start_period: 50s
+      timeout: 10s
+
+volumes:
+  java-logs:
+    driver: local
+    driver_opts:
+      type: none
+      device: logs/app_java
+      o: bind
+  
+  python-logs: 
+    driver: local
+    driver_opts:
+      type: none
+      device: logs/app_python
+      o: bind
+
+  promtail-conf: 
+    driver: local
+    driver_opts:
+      type: none
+      device: promtail
+      o: bind
+
+  prometheus-conf: 
+    driver: local
+    driver_opts:
+      type: none
+      device: prometheus
+      o: bind
+  
+  prometheus-data: 
+    driver: local
+    driver_opts:
+      type: none
+      device: prometheus_data
+      o: bind
+

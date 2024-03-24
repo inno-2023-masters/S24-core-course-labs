@@ -1,0 +1,14 @@
+---
+- name: Update apt package cache
+  apt:
+    update_cache: yes
+
+- name: Install Docker 
+  tags: 
+    - docker-install
+  import_tasks: install_docker.yml
+
+- name: Install docker-compose 
+  tags: 
+    - docker-compose-install
+  import_tasks: install_docker_compose.yml
