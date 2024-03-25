@@ -1,0 +1,8 @@
+sanic
+sanic-ext
+sanic-testing
+ntplib
+tzdata
+jinja2
+pytest
+prometheus-client
