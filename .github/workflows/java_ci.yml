@@ -1,0 +1,42 @@
+name: Java Spring CI Workflow
+
+on:
+  push:
+    paths:
+      - "app_java/**/*"
+      - ".github/workflows/java_ci.yml"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+
+      - name: Build with Maven
+        run: mvn -B clean package --file app_java/pom.xml
+
+      - name: Run Tests
+        run: mvn test --file app_java/pom.xml
+
+      - name: Run Checkstyle
+        run: mvn checkstyle:checkstyle --file app_java/pom.xml
+
+
+      - name: Docker Login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker Build and Push
+        run: |
+          docker build -t j_app app_java
+          docker tag j_app djhovi/j_app:latest
+          docker push djhovi/j_app:latest
