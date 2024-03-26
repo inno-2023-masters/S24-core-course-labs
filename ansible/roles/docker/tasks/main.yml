@@ -1,0 +1,20 @@
+- name: Update apt
+  apt:
+    name: apt
+    state: latest
+    update_cache: true
+
+- name: Install pip
+  apt:
+    name: 
+      - python3-pip
+      - python3-setuptools
+    state: latest
+    update_cache: true
+
+
+- name: Install Docker
+  import_tasks: install_docker.yml
+
+- name: Install docker-compose
+  import_tasks: install_compose.yml
