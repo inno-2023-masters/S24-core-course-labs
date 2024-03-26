@@ -1,0 +1,57 @@
+name: Python App Workflow
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python-app-job:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./app_python
+
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-python@master
+        with:
+          python-version: 3.10.13
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint
+        run: pylint app.py
+
+      - name: Test
+        run: pytest unittests.py
+
+      - name: Setup Snyk
+        uses: snyk/actions/setup@master
+
+      - name: Snyk Run
+        run: snyk test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  docker-push:
+    needs: python-app-job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@master
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@master
+        with:
+          context: "{{defaultContext}}:app_python/"
+          push: true
+          tags: sapushha/sapushha_flask_app:latest

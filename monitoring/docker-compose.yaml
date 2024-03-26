@@ -1,0 +1,77 @@
+version: "3"
+
+networks:
+  loki:
+  prometheus:
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    tag: "{{.ImageName}}|{{.Name}}"
+    max-size: "10m"
+
+x-deploy:
+  &default-deploy
+  resources:
+    limits:
+      memory: 100m
+
+services:
+  app-python:
+    image: sapushha/sapushha_flask_app:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - prometheus
+    logging: *default-logging
+    deploy: *default-deploy
+
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki
+      - prometheus
+    logging: *default-logging
+    deploy: *default-deploy
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    volumes:
+      - ./promtail.yaml:/etc/promtail/config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - loki
+      - prometheus
+    logging: *default-logging
+    deploy: *default-deploy
+
+  grafana:
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - ./ds.yaml:/etc/grafana/provisioning/datasources/ds.yaml
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - loki
+      - prometheus
+    logging: *default-logging
+    deploy: *default-deploy
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - prometheus
+    deploy: *default-deploy
