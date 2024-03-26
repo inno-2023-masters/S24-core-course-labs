@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  app_python:
+    image: brutaljesus/devops_lab_2
+    ports:
+      - 8000:8000
+    labels:
+      logging: "promtail"
+    logging:
+      driver: "local"
+      options:
+        max-file: 5
+        max-size: 15m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "app_python:8000/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3000:3000
+    volumes:
+      - ./configs/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+    logging:
+      driver: "local"
+      options:
+        max-file: 5
+        max-size: 15m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "grafana:3000/api/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - 3100:3100
+    command: -config.file=/etc/loki/local-config.yaml
+    logging:
+      driver: "local"
+      options:
+        max-file: 5
+        max-size: 15m
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "loki:3100/ready"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+
+  promtail:
+    image:  grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - ./configs/promtail.yaml:/etc/promtail/promtail.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/promtail.yaml
+    depends_on:
+      - loki
+    logging:
+      driver: "local"
+      options:
+        max-file: 5
+        max-size: 15m
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 10s bash -c ':> /dev/tcp/promtail/9080'"]
+      # article: https://medium.com/bash-tips-and-tricks/part01-tcp-udp-request-with-a-native-bash-feature-and-without-curl-wget-9dcef59c30aa
+      interval: 20s
+      timeout: 10s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    logging:
+      driver: "local"
+      options:
+        max-file: 5
+        max-size: 15m
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "prometheus:9090/status"]
+      interval: 20s
+      timeout: 10s
+      retries: 3

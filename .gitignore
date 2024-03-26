@@ -1,0 +1,9 @@
+.idea/
+
+__pycache__/
+*/.coverage
+
+.terraform/
+**/terraform.*
+**/.terraform.*
+/app_python/.python-version
