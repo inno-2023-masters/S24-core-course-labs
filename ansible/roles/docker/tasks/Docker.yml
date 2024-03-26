@@ -1,0 +1,4 @@
+- name: Docker installation
+  apt:
+    name: docker-ce
+    state: latest
