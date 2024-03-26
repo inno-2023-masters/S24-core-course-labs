@@ -1,0 +1,6 @@
+---
+- name: Setup Web Application
+  hosts: virtual_machines
+  roles:
+    - role: roles/web_app
+      become: true
