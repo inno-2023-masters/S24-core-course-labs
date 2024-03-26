@@ -1,0 +1,12 @@
+- name: Install Docker
+  hosts: all
+  become: true
+
+  roles:
+    - docker
+
+- name: Deploy flask app
+  hosts: all
+  become: true
+  roles:
+    - web_app
