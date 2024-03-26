@@ -1,0 +1,57 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Scala CI
+
+on:
+  push:
+    paths:
+      - app_scala/**
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app_scala
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: 'sbt'
+    - name: Run tests
+      run: sbt test
+      # Optional: This step uploads information to the GitHub dependency graph and unblocking Dependabot alerts for the repository
+    - name: Run linter
+      run: sbt scalafmt
+    - name: Set up Snyk CLI to check for security issues
+      # Snyk can be used to break the build when it detects security issues.
+      # In this case we want to upload the SAST issues to GitHub Code Scanning
+      uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
+
+      # For Snyk Open Source you must first set up the development environment for your application's dependencies
+      # For example for Node
+      #- uses: actions/setup-node@v3
+      #  with:
+      #    node-version: 16
+      
+      env:
+        # This is where you will need to introduce the Snyk API token created with your Snyk account
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
+      # Use || true to not fail the pipeline
+    - name: Snyk auth
+      run: snyk auth ${{ secrets.SNYK_TOKEN }}
+    - name: Snyk Code test
+      run: snyk test
