@@ -1,0 +1,50 @@
+- name: Cache handling
+  apt:
+    update_cache: yes
+
+- name: Installation of necessary system packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - gnupg-agent
+    - software-properties-common
+
+- name: Delete conflicting Docker GPG apt Key
+  file:
+    path: /etc/apt/sources.list.d/docker.list
+    state: absent
+  ignore_errors: yes
+
+- name: Delete cache
+  apt:
+    autoclean: yes
+
+- name: Retrieve Docker GPG apt Key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker repository to apt sources
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+    state: present
+
+- name: Check Docker configuration
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+    state: present
+    filename: docker
+  register: docker_repo
+
+- name: Install Docker
+  apt:
+    name: 
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+    state: present
