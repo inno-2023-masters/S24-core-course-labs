@@ -1,0 +1,7 @@
+- name: Docker playbook
+  hosts: localhost
+  become: True
+  roles:
+    - web_app
+# Task 1
+#    - geerlingguy.docker
