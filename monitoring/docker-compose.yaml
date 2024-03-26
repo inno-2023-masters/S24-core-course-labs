@@ -1,0 +1,112 @@
+version: "3"
+
+networks:
+  loki:
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    tag: "{{.ImageName}}|{{.Name}}"
+
+x-deploy:
+  &default-deploy
+  resources:
+    limits:
+      memory: 100M
+
+services:
+  app-python:
+    image: nad777/anton_nekhaev_flask:latest
+    ports:
+      - target: 5001
+        published: 5001
+    logging: *default-logging
+    deploy: *default-deploy
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5001/" ]
+  app-go:
+    image: nad777/anton_nekhaev_go:latest
+    ports:
+      - target: 5002
+        published: 5002
+    logging: *default-logging
+    deploy: *default-deploy
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5002/" ]
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki
+    logging: *default-logging
+    deploy: *default-deploy
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready" ]
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    volumes:
+      - ./promtail.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - loki
+    logging: *default-logging
+    deploy: *default-deploy
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/" ]
+
+  grafana:
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy 
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - loki
+    logging: *default-logging
+    deploy: *default-deploy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - loki
+    mem_limit: 100m
+    logging: *default-logging
+    deploy: *default-deploy
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy" ]
+
+volumes:
+  prometheus-data:
