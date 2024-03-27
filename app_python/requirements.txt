@@ -1,0 +1,9 @@
+FastAPI==0.109.1
+pydantic==2.6.0
+pydantic-settings==2.1.0
+uvicorn==0.27.0
+pytz==2024.1
+ntplib==0.4.0
+httpx==0.26.0
+pytest==8.0.1
+prometheus_fastapi_instrumentator==7.0.0
