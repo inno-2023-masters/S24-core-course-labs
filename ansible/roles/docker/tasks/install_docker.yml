@@ -1,0 +1,15 @@
+---
+# Update apt
+- name: Update apt packages
+  apt:
+    update_cache: yes
+    cache_valid_time: 86400
+  tags: docker
+
+# Check if the current docker.io package is latest
+- name: Install/Update docker.io package
+  apt:
+    name: docker.io
+    state: latest
+  tags: docker
+  notify: start_docker
