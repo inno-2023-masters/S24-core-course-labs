@@ -1,0 +1,5 @@
+- name: Install web app
+  hosts: all
+  become: true
+  roles:
+    - web_app
