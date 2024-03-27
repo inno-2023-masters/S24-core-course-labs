@@ -1,0 +1,6 @@
+# Binaries
+**/bin/
+**/obj/
+
+# Personal dev files
+*.DotSettings.user
