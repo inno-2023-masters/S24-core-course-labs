@@ -1,0 +1,31 @@
+import unittest
+from app import app
+from datetime import datetime
+import pytz
+from bs4 import BeautifulSoup
+
+
+class TestApp(unittest.TestCase):
+
+    def setUp(self):
+        app.testing = True
+        self.app = app.test_client()
+
+    # Verify that the endpoint returns a status code of 200 (OK)
+    def test_index(self):
+        response = self.app.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"The current time in Moscow:", response.data)
+
+    # Verify if the displayed time matches the current time in Moscow
+    def test_time_correctness(self):
+        response = self.app.get('/')
+        moscow = pytz.timezone('Europe/Moscow')
+        current_time = datetime.now(moscow).strftime('%Y-%m-%d %H:%M:%S')
+        soup = BeautifulSoup(response.data, 'html.parser')
+        displayed_time = soup.find('h3').text.strip()
+        self.assertEqual(displayed_time, current_time)
+
+
+if __name__ == "__main__":
+    unittest.main()
