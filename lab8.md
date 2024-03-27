@@ -69,3 +69,4 @@ In this lab, you will become acquainted with Prometheus, set it up, and configur
 - Create pull requests (PRs) as needed: from your fork to the main branch of this repository, and from your fork's branch to your fork's master branch.
 
 > Note: Ensure thorough documentation of your work, and guarantee that Prometheus correctly collects metrics. Take advantage of the bonus tasks to deepen your understanding and enhance the completeness of your setup.
+
