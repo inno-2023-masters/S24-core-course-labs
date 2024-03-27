@@ -1,0 +1,17 @@
+positions:
+  ? /var/lib/docker/containers/9f562865fe954ff79e3bd261f8206ec9cd72318bab6cc37db0d0df3ddff2c7b3/9f562865fe954ff79e3bd261f8206ec9cd72318bab6cc37db0d0df3ddff2c7b3-json.log
+  : "0"
+  ? /var/lib/docker/containers/11bddf1778ebc7fe3d9bd092b0e8282bf8be3c75f95adc2a4e77c1be58d93da2/11bddf1778ebc7fe3d9bd092b0e8282bf8be3c75f95adc2a4e77c1be58d93da2-json.log
+  : "588"
+  ? /var/lib/docker/containers/33b46cd307e87a79b3704c999943274c82c5dca95b7f0f45ae89e0d9d4a029b7/33b46cd307e87a79b3704c999943274c82c5dca95b7f0f45ae89e0d9d4a029b7-json.log
+  : "9925"
+  ? /var/lib/docker/containers/a25a69d15a8151dacbb0d87ab48e921b39d24eb27bc0078a4aa4f95bedad9bae/a25a69d15a8151dacbb0d87ab48e921b39d24eb27bc0078a4aa4f95bedad9bae-json.log
+  : "0"
+  ? /var/lib/docker/containers/a74cf7e2310f95a18c414e30af8238453a56e87fa441b3a9709b705d9ff530bf/a74cf7e2310f95a18c414e30af8238453a56e87fa441b3a9709b705d9ff530bf-json.log
+  : "13640"
+  ? /var/lib/docker/containers/aa73ca8f61b8acd61ba034c6d110156435479d97407674c5dd1336832504c37e/aa73ca8f61b8acd61ba034c6d110156435479d97407674c5dd1336832504c37e-json.log
+  : "16098"
+  ? /var/lib/docker/containers/b75eec34b33c9b2292771fd6a901444458724f8cbbcc9290c233f51834eea317/b75eec34b33c9b2292771fd6a901444458724f8cbbcc9290c233f51834eea317-json.log
+  : "0"
+  ? /var/lib/docker/containers/ba3a7c44f3ba50df90ace9ab89e794a38308691f794640c400d6c1dc0b5c231e/ba3a7c44f3ba50df90ace9ab89e794a38308691f794640c400d6c1dc0b5c231e-json.log
+  : "26668"

@@ -1,0 +1,191 @@
+version: "3"
+
+networks:
+  loki:
+
+services:
+  app_python:
+    image: dianatomiya/devops:p_v1.0
+    ports:
+      - "80:80"
+    networks:
+      - loki
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+        tag: "{{.ImageName}}|{{.Name}}"
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  app_go:
+    image: dianatomiya/devops:g_v2.0
+    ports:
+      - "8080:8080"
+    networks:
+      - loki
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+        tag: "{{.ImageName}}|{{.Name}}" 
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+        tag: "{{.ImageName}}|{{.Name}}"
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  init_promtail:
+    image: grafana/promtail:latest
+    user: root
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /var/lib/promtail/positions
+        chown -R 65534:65534 /var/lib/promtail/positions
+    volumes:
+      - ./promtail_data:/var/lib/promtail
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers
+      - ./promtail.yml:/etc/promtail/config.yml
+      - ./promtail_data:/var/lib/promtail
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - loki
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+        tag: "{{.ImageName}}|{{.Name}}"
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    depends_on:
+      - init_promtail
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9080"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  grafana:
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_LOG_MODE=console file
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=true
+      - GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES=true
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - loki
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+        tag: "{{.ImageName}}|{{.Name}}"
+    volumes:
+      - ./grafana/data:/var/lib/grafana
+      - ./grafana/config/provisioning:/etc/grafana/provisioning
+      - ./grafana/logs:/var/log/grafana
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  init_prometheus:
+    image: prom/prometheus
+    user: root
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        chown -R 65534:65534 /prometheus
+    volumes:
+      - ./prom_data:/prometheus
+
+  prometheus:
+    image: prom/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - ./prom_data:/prometheus
+    networks:
+      - loki
+    logging:
+      driver: "json-file"
+      options:
+        tag: "{{.ImageName}}|{{.Name}}"
+        max-size: "10m"
+        max-file: "10"
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    depends_on:
+      - init_prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

@@ -1,0 +1,6 @@
+- name: Prepare docker
+  hosts: yacloud
+  become: true
+  roles:
+    - docker
+    - web_app
